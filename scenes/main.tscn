@@ -146,11 +146,24 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "就绪"
 
-[node name="HelpLabel" type="Label" parent="HUD/Root/BottomBar" unique_id=461700983]
+[node name="ControlsRow" type="HBoxContainer" parent="HUD/Root/BottomBar"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="GrabButton" type="Button" parent="HUD/Root/BottomBar/ControlsRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 40)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 18
+text = "下抓 / 松开"
+
+[node name="HelpLabel" type="Label" parent="HUD/Root/BottomBar/ControlsRow" unique_id=461700983]
 modulate = Color(0.75, 0.8, 0.86, 1)
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 14
-text = "WASD / 方向键移动抓夹 · 空格下抓/松开 · R 重开本回合 · 把娃娃丢进右前角出口"
+text = "先点击游戏窗口 · WASD移动 · 空格下抓/松开 · R重开 · 或点左侧按钮"
 
 [node name="ResultPanel" type="PanelContainer" parent="HUD/Root" unique_id=255961097]
 unique_name_in_owner = true

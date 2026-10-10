@@ -18,12 +18,13 @@ const COOLDOWN := 1.0
 const X_RANGE := 0.9
 const Z_RANGE := 0.5
 const TOP_Y := 1.42
-## Lowest gripper height above floor so jaws meet doll centers.
 const GRIP_TARGET_Y := 0.28
 
 var state: State = State.IDLE
 var grip_force: float = 0.0
 var held_doll: Doll = null
+## Shown on HUD for debugging input.
+var last_input_debug: String = "无"
 
 var _rail_x: float = 0.0
 var _rail_z: float = 0.0
@@ -31,7 +32,6 @@ var _drop_y: float = 0.0
 var _close_t: float = 0.0
 var _cooldown_left: float = 0.0
 var _move_input: Vector2 = Vector2.ZERO
-var _space_was_down: bool = false
 var _hold_offset: Vector3 = Vector3.ZERO
 
 var _carriage: Node3D
@@ -44,6 +44,8 @@ var drop_parent: Node
 
 
 func _ready() -> void:
+	set_process(true)
+	set_process_input(true)
 	_build()
 	if drop_parent == null:
 		drop_parent = get_parent()
@@ -51,13 +53,49 @@ func _ready() -> void:
 	_update_visuals()
 
 
-func _physics_process(delta: float) -> void:
-	_handle_input()
+func _input(event: InputEvent) -> void:
+	# Handle grab before GUI consumes Space as ui_accept.
+	if event.is_action_pressed("grab"):
+		_on_grab_pressed()
+		get_viewport().set_input_as_handled()
+		last_input_debug = "抓取"
+		return
+
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.physical_keycode == KEY_SPACE or event.keycode == KEY_SPACE:
+			_on_grab_pressed()
+			get_viewport().set_input_as_handled()
+			last_input_debug = "抓取"
+			return
+
+
+func _process(delta: float) -> void:
+	_read_move_input()
 	_update_movement(delta)
 	_update_state(delta)
 	_update_visuals()
 	_update_grip(delta)
 	_sync_held_doll()
+
+
+func _read_move_input() -> void:
+	var axis := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	# Fallback for cases where InputMap failed to bind.
+	if axis == Vector2.ZERO:
+		axis = Vector2(
+			float(Input.is_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_D)) \
+				- float(Input.is_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_A)),
+			float(Input.is_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_S)) \
+				- float(Input.is_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_W))
+		)
+		if axis == Vector2.ZERO:
+			axis = Vector2(
+				Input.get_axis("ui_left", "ui_right"),
+				Input.get_axis("ui_up", "ui_down")
+			)
+	_move_input = axis
+	if _move_input != Vector2.ZERO:
+		last_input_debug = "移动 (%.1f, %.1f)" % [_move_input.x, _move_input.y]
 
 
 func _build() -> void:
@@ -132,28 +170,6 @@ func _make_jaw(mat: Material, side: int) -> Node3D:
 	return jaw
 
 
-func _handle_input() -> void:
-	var ui := Vector2(
-		Input.get_axis("ui_left", "ui_right"),
-		Input.get_axis("ui_up", "ui_down")
-	)
-	var wasd := Vector2(
-		float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A)),
-		float(Input.is_physical_key_pressed(KEY_S)) - float(Input.is_physical_key_pressed(KEY_W))
-	)
-	_move_input = wasd if wasd != Vector2.ZERO else ui
-
-	if Input.is_action_just_pressed("grab") or _space_just_pressed():
-		_on_grab_pressed()
-
-
-func _space_just_pressed() -> bool:
-	var down := Input.is_physical_key_pressed(KEY_SPACE)
-	var just := down and not _space_was_down
-	_space_was_down = down
-	return just
-
-
 func _on_grab_pressed() -> void:
 	match state:
 		State.IDLE:
@@ -163,6 +179,10 @@ func _on_grab_pressed() -> void:
 			_begin_open()
 		_:
 			pass
+
+
+func request_grab() -> void:
+	_on_grab_pressed()
 
 
 func _update_movement(delta: float) -> void:

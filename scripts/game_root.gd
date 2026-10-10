@@ -10,11 +10,15 @@ const DOLL_COUNT := 10
 
 var _exit: ExitChute
 var _rng := RandomNumberGenerator.new()
-var _r_was_down := false
 var _restarting := false
 
 
 func _ready() -> void:
+	InputSetup.ensure_actions()
+	# Prevent Chinese IME from swallowing WASD / Space.
+	DisplayServer.window_set_ime_active(false)
+	get_viewport().gui_release_focus()
+
 	_rng.randomize()
 	_exit = MachineBuilder.build(world)
 	_exit.doll_exited.connect(_on_doll_exited)
@@ -28,12 +32,16 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	hud.set_claw_state(claw.get_state_label(), claw.grip_force)
+	hud.set_claw_state(
+		"%s | 输入:%s" % [claw.get_state_label(), claw.last_input_debug],
+		claw.grip_force
+	)
 
-	var r_down := Input.is_physical_key_pressed(KEY_R)
-	if r_down and not _r_was_down:
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("restart_round"):
 		_restart()
-	_r_was_down = r_down
+		get_viewport().set_input_as_handled()
 
 
 func _wire_ui() -> void:
@@ -41,6 +49,7 @@ func _wire_ui() -> void:
 		hud.hide_result()
 		hud.set_target_progress(0, target)
 		hud.set_money(round_manager.total_money)
+		get_viewport().gui_release_focus()
 	)
 	round_manager.earnings_changed.connect(func(earned: int, total: int):
 		hud.set_target_progress(earned, round_manager.target)
@@ -52,6 +61,10 @@ func _wire_ui() -> void:
 		hud.show_result(success, earned, target, total)
 	)
 	hud.restart_button.pressed.connect(_restart)
+	hud.grab_button.pressed.connect(func():
+		claw.request_grab()
+		claw.last_input_debug = "按钮抓取"
+	)
 
 
 func _spawn_dolls() -> void:

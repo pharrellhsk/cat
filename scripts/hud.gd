@@ -10,6 +10,7 @@ extends CanvasLayer
 @onready var result_panel: PanelContainer = %ResultPanel
 @onready var result_label: Label = %ResultLabel
 @onready var restart_button: Button = %RestartButton
+@onready var grab_button: Button = %GrabButton
 
 var _banner_tween: Tween
 
@@ -17,6 +18,27 @@ var _banner_tween: Tween
 func _ready() -> void:
 	result_panel.visible = false
 	banner_label.text = ""
+	_disable_focus_steal()
+	restart_button.focus_mode = Control.FOCUS_NONE
+	grab_button.focus_mode = Control.FOCUS_NONE
+
+
+func _disable_focus_steal() -> void:
+	# Keep keyboard events going to the game, not HUD controls.
+	var root := $Root as Control
+	_set_tree_mouse_ignore(root)
+	progress_bar.focus_mode = Control.FOCUS_NONE
+	progress_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func _set_tree_mouse_ignore(node: Node) -> void:
+	if node is Control:
+		var c := node as Control
+		if c != grab_button and c != restart_button and c != result_panel:
+			c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			c.focus_mode = Control.FOCUS_NONE
+	for child in node.get_children():
+		_set_tree_mouse_ignore(child)
 
 
 func set_money(total: int) -> void:
@@ -56,6 +78,8 @@ func show_banner(text: String) -> void:
 
 func show_result(success: bool, earned: int, target: int, total: int) -> void:
 	result_panel.visible = true
+	result_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	restart_button.focus_mode = Control.FOCUS_ALL
 	if success:
 		result_label.text = "回合结算：达标\n收益 %d / 目标 %d\n总金额 %d" % [earned, target, total]
 	else:
@@ -64,3 +88,5 @@ func show_result(success: bool, earned: int, target: int, total: int) -> void:
 
 func hide_result() -> void:
 	result_panel.visible = false
+	restart_button.focus_mode = Control.FOCUS_NONE
+	restart_button.release_focus()
