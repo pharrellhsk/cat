@@ -1,0 +1,186 @@
+[gd_scene format=3 uid="uid://bclawmvp001"]
+
+[ext_resource type="Script" uid="uid://qxsx4ybax5x" path="res://scripts/game_root.gd" id="1_game"]
+[ext_resource type="Script" uid="uid://dwfscmaiwtc0r" path="res://scripts/claw.gd" id="2_claw"]
+[ext_resource type="Script" uid="uid://di82ld5vmx4to" path="res://scripts/round_manager.gd" id="3_round"]
+[ext_resource type="Script" uid="uid://cpv2t45gnj3ca" path="res://scripts/hud.gd" id="4_hud"]
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 1
+background_color = Color(0.12, 0.14, 0.18, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.65, 0.7, 0.8, 1)
+ambient_light_energy = 0.55
+tonemap_mode = 2
+
+[node name="Main" type="Node3D" unique_id=798918368]
+script = ExtResource("1_game")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=715371989]
+environment = SubResource("Environment_1")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=16036153]
+transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 2, 6, 3)
+light_energy = 1.15
+shadow_enabled = true
+
+[node name="FillLight" type="OmniLight3D" parent="." unique_id=601524620]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 2.2, 1.8)
+light_color = Color(1, 0.92, 0.85, 1)
+light_energy = 0.8
+omni_range = 8.0
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1820944415]
+transform = Transform3D(1, 0, 0, 0, 0.8936164, 0.44959277, 0, -0.4494422, 0.8939157, 0, 2, 2.8)
+current = true
+fov = 33.7
+
+[node name="World" type="Node3D" parent="." unique_id=1557581865]
+
+[node name="Claw" type="Node3D" parent="World" unique_id=44729981]
+script = ExtResource("2_claw")
+
+[node name="Dolls" type="Node3D" parent="World" unique_id=2042843799]
+
+[node name="RoundManager" type="Node" parent="." unique_id=1368142324]
+script = ExtResource("3_round")
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1157569203]
+script = ExtResource("4_hud")
+
+[node name="Root" type="Control" parent="HUD" unique_id=1248127311]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TopBar" type="HBoxContainer" parent="HUD/Root" unique_id=626129474]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 24.0
+offset_top = 18.0
+offset_right = -24.0
+offset_bottom = 78.0
+grow_horizontal = 2
+theme_override_constants/separation = 24
+
+[node name="MoneyLabel" type="Label" parent="HUD/Root/TopBar" unique_id=128727570]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 22
+text = "总金额  0"
+
+[node name="CenterBlock" type="VBoxContainer" parent="HUD/Root/TopBar" unique_id=1253051393]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.4
+
+[node name="TargetLabel" type="Label" parent="HUD/Root/TopBar/CenterBlock" unique_id=1115419634]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "本回合  0 / 30"
+horizontal_alignment = 1
+
+[node name="ProgressBar" type="ProgressBar" parent="HUD/Root/TopBar/CenterBlock" unique_id=1283223464]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 14)
+layout_mode = 2
+max_value = 30.0
+show_percentage = false
+
+[node name="RightBlock" type="VBoxContainer" parent="HUD/Root/TopBar" unique_id=1460244007]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TimerLabel" type="Label" parent="HUD/Root/TopBar/RightBlock" unique_id=111792509]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "剩余  30.0s"
+horizontal_alignment = 2
+
+[node name="MetaLabel" type="Label" parent="HUD/Root/TopBar/RightBlock" unique_id=1914963480]
+modulate = Color(0.8, 0.85, 0.9, 1)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "第1局 · 第1回合"
+horizontal_alignment = 2
+
+[node name="BannerLabel" type="Label" parent="HUD/Root" unique_id=300934818]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -280.0
+offset_top = 96.0
+offset_right = 280.0
+offset_bottom = 136.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+
+[node name="BottomBar" type="VBoxContainer" parent="HUD/Root" unique_id=208867284]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -110.0
+offset_right = -24.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 6
+
+[node name="StateLabel" type="Label" parent="HUD/Root/BottomBar" unique_id=1670271466]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "就绪"
+
+[node name="HelpLabel" type="Label" parent="HUD/Root/BottomBar" unique_id=461700983]
+modulate = Color(0.75, 0.8, 0.86, 1)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "WASD / 方向键移动抓夹 · 空格下抓/松开 · R 重开本回合 · 把娃娃丢进右前角出口"
+
+[node name="ResultPanel" type="PanelContainer" parent="HUD/Root" unique_id=255961097]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -110.0
+offset_right = 200.0
+offset_bottom = 110.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ResultVBox" type="VBoxContainer" parent="HUD/Root/ResultPanel" unique_id=786117302]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ResultLabel" type="Label" parent="HUD/Root/ResultPanel/ResultVBox" unique_id=1062627673]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "结算"
+horizontal_alignment = 1
+
+[node name="RestartButton" type="Button" parent="HUD/Root/ResultPanel/ResultVBox" unique_id=1029572857]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "再来一回合 (R)"
