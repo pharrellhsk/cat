@@ -1,0 +1,338 @@
+[gd_scene format=3 uid="uid://bclawtitle001"]
+
+[ext_resource type="Script" path="res://scripts/title_screen.gd" id="1_title"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_panel"]
+bg_color = Color(0.07, 0.08, 0.12, 0.72)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.93, 0.78, 0.48, 0.22)
+corner_radius_top_left = 22
+corner_radius_top_right = 22
+corner_radius_bottom_right = 22
+corner_radius_bottom_left = 22
+content_margin_left = 48.0
+content_margin_top = 36.0
+content_margin_right = 48.0
+content_margin_bottom = 36.0
+shadow_color = Color(0, 0, 0, 0.35)
+shadow_size = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_btn"]
+bg_color = Color(0.16, 0.18, 0.26, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.78, 0.68, 0.48, 0.35)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+content_margin_left = 18.0
+content_margin_top = 12.0
+content_margin_right = 18.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_btn_hover"]
+bg_color = Color(0.78, 0.58, 0.28, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.98, 0.88, 0.62, 0.9)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+content_margin_left = 18.0
+content_margin_top = 12.0
+content_margin_right = 18.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_btn_pressed"]
+bg_color = Color(0.62, 0.44, 0.2, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.96, 0.82, 0.5, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+content_margin_left = 18.0
+content_margin_top = 12.0
+content_margin_right = 18.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_btn_focus"]
+bg_color = Color(0.2, 0.23, 0.32, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.93, 0.78, 0.48, 0.95)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+content_margin_left = 18.0
+content_margin_top = 12.0
+content_margin_right = 18.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_overlay"]
+bg_color = Color(0.08, 0.09, 0.13, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.93, 0.78, 0.48, 0.28)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+content_margin_left = 32.0
+content_margin_top = 28.0
+content_margin_right = 32.0
+content_margin_bottom = 28.0
+
+[node name="TitleScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_title")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.07, 0.08, 0.12, 1)
+
+[node name="GlowA" type="ColorRect" parent="."]
+modulate = Color(0.72, 0.42, 0.28, 0.16)
+layout_mode = 1
+anchors_preset = 0
+offset_left = -120.0
+offset_top = -80.0
+offset_right = 420.0
+offset_bottom = 360.0
+mouse_filter = 2
+color = Color(1, 1, 1, 1)
+
+[node name="GlowB" type="ColorRect" parent="."]
+modulate = Color(0.22, 0.36, 0.55, 0.18)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -480.0
+offset_top = 80.0
+offset_right = 80.0
+offset_bottom = 560.0
+grow_horizontal = 0
+mouse_filter = 2
+color = Color(1, 1, 1, 1)
+
+[node name="GlowC" type="ColorRect" parent="."]
+modulate = Color(0.93, 0.72, 0.38, 0.08)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -260.0
+offset_top = -220.0
+offset_right = 260.0
+offset_bottom = 40.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+color = Color(1, 1, 1, 1)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MenuPanel" type="PanelContainer" parent="Center"]
+custom_minimum_size = Vector2(420, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBox_panel")
+
+[node name="MenuColumn" type="VBoxContainer" parent="Center/MenuPanel"]
+layout_mode = 2
+theme_override_constants/separation = 28
+
+[node name="TitleBlock" type="VBoxContainer" parent="Center/MenuPanel/MenuColumn"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Eyebrow" type="Label" parent="Center/MenuPanel/MenuColumn/TitleBlock"]
+modulate = Color(0.93, 0.78, 0.48, 0.85)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "CLAW CAT"
+horizontal_alignment = 1
+
+[node name="TitleLabel" type="Label" parent="Center/MenuPanel/MenuColumn/TitleBlock"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.97, 0.94, 0.88, 1)
+theme_override_colors/font_shadow_color = Color(0.04, 0.03, 0.02, 0.55)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 4
+theme_override_font_sizes/font_size = 64
+text = "猫爪奇谭"
+horizontal_alignment = 1
+
+[node name="Rule" type="ColorRect" parent="Center/MenuPanel/MenuColumn/TitleBlock"]
+custom_minimum_size = Vector2(160, 2)
+layout_mode = 2
+size_flags_horizontal = 4
+color = Color(0.93, 0.78, 0.48, 0.55)
+
+[node name="SubtitleLabel" type="Label" parent="Center/MenuPanel/MenuColumn/TitleBlock"]
+modulate = Color(0.78, 0.82, 0.88, 0.9)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "一爪定乾坤"
+horizontal_alignment = 1
+
+[node name="ButtonColumn" type="VBoxContainer" parent="Center/MenuPanel/MenuColumn"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="StartButton" type="Button" parent="Center/MenuPanel/MenuColumn/ButtonColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 52)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.96, 0.93, 0.86, 1)
+theme_override_colors/font_hover_color = Color(0.12, 0.09, 0.05, 1)
+theme_override_colors/font_pressed_color = Color(0.12, 0.09, 0.05, 1)
+theme_override_colors/font_focus_color = Color(0.96, 0.93, 0.86, 1)
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("StyleBox_btn")
+theme_override_styles/pressed = SubResource("StyleBox_btn_pressed")
+theme_override_styles/hover = SubResource("StyleBox_btn_hover")
+theme_override_styles/focus = SubResource("StyleBox_btn_focus")
+text = "开始游戏"
+
+[node name="SettingsButton" type="Button" parent="Center/MenuPanel/MenuColumn/ButtonColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 52)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.96, 0.93, 0.86, 1)
+theme_override_colors/font_hover_color = Color(0.12, 0.09, 0.05, 1)
+theme_override_colors/font_pressed_color = Color(0.12, 0.09, 0.05, 1)
+theme_override_colors/font_focus_color = Color(0.96, 0.93, 0.86, 1)
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("StyleBox_btn")
+theme_override_styles/pressed = SubResource("StyleBox_btn_pressed")
+theme_override_styles/hover = SubResource("StyleBox_btn_hover")
+theme_override_styles/focus = SubResource("StyleBox_btn_focus")
+text = "设置"
+
+[node name="QuitButton" type="Button" parent="Center/MenuPanel/MenuColumn/ButtonColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 52)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.96, 0.93, 0.86, 1)
+theme_override_colors/font_hover_color = Color(0.12, 0.09, 0.05, 1)
+theme_override_colors/font_pressed_color = Color(0.12, 0.09, 0.05, 1)
+theme_override_colors/font_focus_color = Color(0.96, 0.93, 0.86, 1)
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("StyleBox_btn")
+theme_override_styles/pressed = SubResource("StyleBox_btn_pressed")
+theme_override_styles/hover = SubResource("StyleBox_btn_hover")
+theme_override_styles/focus = SubResource("StyleBox_btn_focus")
+text = "退出游戏"
+
+[node name="HintLabel" type="Label" parent="."]
+modulate = Color(0.7, 0.74, 0.8, 0.7)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -48.0
+offset_bottom = -18.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 14
+text = "方向键 / WASD 选择 · Enter 确认 · Esc 关闭设置"
+horizontal_alignment = 1
+
+[node name="SettingsOverlay" type="ColorRect" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.02, 0.04, 0.62)
+
+[node name="SettingsCenter" type="CenterContainer" parent="SettingsOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SettingsPanel" type="PanelContainer" parent="SettingsOverlay/SettingsCenter"]
+custom_minimum_size = Vector2(420, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBox_overlay")
+
+[node name="SettingsColumn" type="VBoxContainer" parent="SettingsOverlay/SettingsCenter/SettingsPanel"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="SettingsTitle" type="Label" parent="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.97, 0.94, 0.88, 1)
+theme_override_font_sizes/font_size = 28
+text = "设置"
+horizontal_alignment = 1
+
+[node name="SettingsBody" type="Label" parent="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsColumn"]
+modulate = Color(0.8, 0.84, 0.9, 1)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "更多选项即将到来。
+回合时长可在配置表 round_time 中调整。"
+horizontal_alignment = 1
+
+[node name="CloseSettingsButton" type="Button" parent="SettingsOverlay/SettingsCenter/SettingsPanel/SettingsColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.96, 0.93, 0.86, 1)
+theme_override_colors/font_hover_color = Color(0.12, 0.09, 0.05, 1)
+theme_override_colors/font_pressed_color = Color(0.12, 0.09, 0.05, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBox_btn")
+theme_override_styles/pressed = SubResource("StyleBox_btn_pressed")
+theme_override_styles/hover = SubResource("StyleBox_btn_hover")
+theme_override_styles/focus = SubResource("StyleBox_btn_focus")
+text = "返回"
