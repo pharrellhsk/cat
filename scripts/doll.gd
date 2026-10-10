@@ -7,6 +7,7 @@ var def_id: String = "bear"
 var display_name: String = "普通熊"
 var rarity: String = "C"
 var value: int = 15
+var doll_weight: int = 5
 var radius: float = 0.18
 var is_held: bool = false
 var is_collected: bool = false
@@ -23,6 +24,7 @@ func setup(id: String) -> void:
 	value = int(def["value"])
 	radius = float(def["radius"])
 	mass = float(def["mass"])
+	doll_weight = int(def.get("doll_weight", 5))
 
 	continuous_cd = true
 	can_sleep = true

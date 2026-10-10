@@ -1,0 +1,27 @@
+[
+  {
+    "effect_id": 1001,
+    "effect_name": "无",
+    "effect_description": "无特殊效果"
+  },
+  {
+    "effect_id": 1002,
+    "effect_name": "电玩效果",
+    "effect_description": "投入硬币后，随机[参数1]个玩偶分数×[参数2]，分数增加的玩偶有发光效果"
+  },
+  {
+    "effect_id": 2000,
+    "effect_name": "普通玩偶效果",
+    "effect_description": "玩家获得后，娃娃机中每回合会自动生成[参数1]只对应玩偶"
+  },
+  {
+    "effect_id": 2001,
+    "effect_name": "电玩兔玩偶效果",
+    "effect_description": "玩家获得后，娃娃机中每回合会自动生成[参数1]只电玩兔，电玩兔在每次投币后会进行[参数2]次跳动。"
+  },
+  {
+    "effect_id": 3001,
+    "effect_name": "钩爪加固效果",
+    "effect_description": "使用后的[参数1]次抓取过程中，钩爪不会松动"
+  }
+]

@@ -13,6 +13,22 @@ ambient_light_color = Color(0.65, 0.7, 0.8, 1)
 ambient_light_energy = 0.55
 tonemap_mode = 2
 
+[sub_resource type="StyleBoxFlat" id="StyleBox_settings_panel"]
+content_margin_left = 32.0
+content_margin_top = 28.0
+content_margin_right = 32.0
+content_margin_bottom = 28.0
+bg_color = Color(0.08, 0.09, 0.13, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.93, 0.78, 0.48, 0.28)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
 [node name="Main" type="Node3D" unique_id=798918368]
 script = ExtResource("1_game")
 
@@ -31,9 +47,9 @@ light_energy = 0.8
 omni_range = 8.0
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=1820944415]
-transform = Transform3D(1, 0, 0, 0, 0.8936164, 0.44959277, 0, -0.4494422, 0.8939157, 0, 2, 2.8)
+transform = Transform3D(1, 0, 0, 0, 0.8990406, 0.43863824, 0, -0.4384914, 0.89934164, 0, 1.85, 2.8)
 current = true
-fov = 33.7
+fov = 40.0
 
 [node name="World" type="Node3D" parent="." unique_id=1557581865]
 
@@ -46,6 +62,7 @@ script = ExtResource("2_claw")
 script = ExtResource("3_round")
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=1157569203]
+process_mode = 3
 script = ExtResource("4_hud")
 
 [node name="Root" type="Control" parent="HUD" unique_id=1248127311]
@@ -57,11 +74,23 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
+[node name="SettingsButton" type="Button" parent="HUD/Root" unique_id=251374354]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 36)
+layout_mode = 1
+offset_left = 24.0
+offset_top = 18.0
+offset_right = 120.0
+offset_bottom = 54.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 18
+text = "设置"
+
 [node name="TopBar" type="HBoxContainer" parent="HUD/Root" unique_id=626129474]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 24.0
+offset_left = 132.0
 offset_top = 18.0
 offset_right = -24.0
 offset_bottom = 78.0
@@ -73,7 +102,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
-text = "总金额  0"
+text = "分数  0"
 
 [node name="CenterBlock" type="VBoxContainer" parent="HUD/Root/TopBar" unique_id=1253051393]
 layout_mode = 2
@@ -84,7 +113,7 @@ size_flags_stretch_ratio = 1.4
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
-text = "本回合  0 / 30"
+text = "本关  0 / 30"
 horizontal_alignment = 1
 
 [node name="ProgressBar" type="ProgressBar" parent="HUD/Root/TopBar/CenterBlock" unique_id=1283223464]
@@ -98,18 +127,19 @@ show_percentage = false
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="TimerLabel" type="Label" parent="HUD/Root/TopBar/RightBlock" unique_id=111792509]
+[node name="CoinsLabel" type="Label" parent="HUD/Root/TopBar/RightBlock" unique_id=111792509]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "剩余  30.0s"
+text = "硬币  0"
 horizontal_alignment = 2
 
 [node name="MetaLabel" type="Label" parent="HUD/Root/TopBar/RightBlock" unique_id=1914963480]
+unique_name_in_owner = true
 modulate = Color(0.8, 0.85, 0.9, 1)
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
-text = "第1局 · 第1回合"
+text = "第1关 / 12"
 horizontal_alignment = 2
 
 [node name="BannerLabel" type="Label" parent="HUD/Root" unique_id=300934818]
@@ -134,7 +164,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 24.0
 offset_top = -110.0
-offset_right = -24.0
+offset_right = -188.0
 offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 0
@@ -146,24 +176,103 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "就绪"
 
-[node name="ControlsRow" type="HBoxContainer" parent="HUD/Root/BottomBar"]
+[node name="ControlsRow" type="HBoxContainer" parent="HUD/Root/BottomBar" unique_id=510315533]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="GrabButton" type="Button" parent="HUD/Root/BottomBar/ControlsRow"]
+[node name="GrabButton" type="Button" parent="HUD/Root/BottomBar/ControlsRow" unique_id=1703787993]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(160, 40)
 layout_mode = 2
 focus_mode = 0
 theme_override_font_sizes/font_size = 18
-text = "下抓 / 松开"
+text = "下抓"
 
 [node name="HelpLabel" type="Label" parent="HUD/Root/BottomBar/ControlsRow" unique_id=461700983]
 modulate = Color(0.75, 0.8, 0.86, 1)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 14
-text = "先点击游戏窗口 · WASD移动 · 空格下抓/松开 · R重开 · 或点左侧按钮"
+text = "Esc打开设置 · 右下角投币 · WASD移动 · 空格下抓，钩爪会自动运到出口"
+
+[node name="CoinButton" type="Button" parent="HUD/Root" unique_id=276788206]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(148, 48)
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -176.0
+offset_top = -76.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 0
+grow_vertical = 0
+focus_mode = 0
+theme_override_font_sizes/font_size = 22
+text = "投币"
+
+[node name="SettingsOverlay" type="ColorRect" parent="HUD/Root" unique_id=1515629276]
+unique_name_in_owner = true
+process_mode = 3
+visible = false
+z_index = 50
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.02, 0.04, 0.62)
+
+[node name="SettingsCenter" type="CenterContainer" parent="HUD/Root/SettingsOverlay" unique_id=2033236021]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SettingsPanel" type="PanelContainer" parent="HUD/Root/SettingsOverlay/SettingsCenter" unique_id=542491664]
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBox_settings_panel")
+
+[node name="SettingsColumn" type="VBoxContainer" parent="HUD/Root/SettingsOverlay/SettingsCenter/SettingsPanel" unique_id=912951679]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="SettingsTitle" type="Label" parent="HUD/Root/SettingsOverlay/SettingsCenter/SettingsPanel/SettingsColumn" unique_id=1386363022]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "设置"
+horizontal_alignment = 1
+
+[node name="SettingsResumeButton" type="Button" parent="HUD/Root/SettingsOverlay/SettingsCenter/SettingsPanel/SettingsColumn" unique_id=2069053284]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 18
+text = "继续游戏"
+
+[node name="SettingsRestartButton" type="Button" parent="HUD/Root/SettingsOverlay/SettingsCenter/SettingsPanel/SettingsColumn" unique_id=1496660532]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 18
+text = "重开"
+
+[node name="SettingsTitleButton" type="Button" parent="HUD/Root/SettingsOverlay/SettingsCenter/SettingsPanel/SettingsColumn" unique_id=706825507]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 18
+text = "返回主菜单"
 
 [node name="ResultPanel" type="PanelContainer" parent="HUD/Root" unique_id=255961097]
 unique_name_in_owner = true
@@ -196,4 +305,4 @@ horizontal_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "再来一回合 (R)"
+text = "查看结算"

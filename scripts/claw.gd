@@ -5,14 +5,14 @@ signal grab_started
 signal grab_finished
 signal released_doll(doll: Doll)
 
-enum State { IDLE, LOWERING, CLOSING, LIFTING, HOLDING, OPENING, COOLDOWN }
+enum State { IDLE, LOWERING, CLOSING, LIFTING, CARRYING, OPENING, COOLDOWN }
 
 const MOVE_SPEED := 1.2
 const LOWER_SPEED := 0.8
 const RISE_SPEED := 0.6
+const CARRY_SPEED := 1.4
 const CLOSE_TIME := 0.4
-const MAX_GRIP := 25.0
-const GRIP_DECAY := 0.3
+const SLIP_CHECK_INTERVAL := 0.35
 const ROPE_LENGTH := 1.5
 const COOLDOWN := 1.0
 const X_RANGE := 0.9
@@ -23,8 +23,12 @@ const GRIP_TARGET_Y := 0.28
 var state: State = State.IDLE
 var grip_force: float = 0.0
 var held_doll: Doll = null
-## Shown on HUD for debugging input.
+var credit_ready: bool = false
 var last_input_debug: String = "无"
+var drop_parent: Node
+var claw_power: int = 15
+var slip_immune: bool = false
+var drop_target := Vector2(0.7, 0.4)
 
 var _rail_x: float = 0.0
 var _rail_z: float = 0.0
@@ -33,6 +37,7 @@ var _close_t: float = 0.0
 var _cooldown_left: float = 0.0
 var _move_input: Vector2 = Vector2.ZERO
 var _hold_offset: Vector3 = Vector3.ZERO
+var _slip_timer: float = 0.0
 
 var _carriage: Node3D
 var _cable: MeshInstance3D
@@ -40,7 +45,6 @@ var _gripper: Node3D
 var _left_jaw: Node3D
 var _right_jaw: Node3D
 var _grip_area: Area3D
-var drop_parent: Node
 
 
 func _ready() -> void:
@@ -54,18 +58,16 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	# Handle grab before GUI consumes Space as ui_accept.
+	if get_tree().paused:
+		return
 	if event.is_action_pressed("grab"):
 		_on_grab_pressed()
 		get_viewport().set_input_as_handled()
-		last_input_debug = "抓取"
 		return
-
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.physical_keycode == KEY_SPACE or event.keycode == KEY_SPACE:
 			_on_grab_pressed()
 			get_viewport().set_input_as_handled()
-			last_input_debug = "抓取"
 			return
 
 
@@ -80,7 +82,6 @@ func _process(delta: float) -> void:
 
 func _read_move_input() -> void:
 	var axis := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-	# Fallback for cases where InputMap failed to bind.
 	if axis == Vector2.ZERO:
 		axis = Vector2(
 			float(Input.is_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_D)) \
@@ -94,7 +95,7 @@ func _read_move_input() -> void:
 				Input.get_axis("ui_up", "ui_down")
 			)
 	_move_input = axis
-	if _move_input != Vector2.ZERO:
+	if _move_input != Vector2.ZERO and state == State.IDLE:
 		last_input_debug = "移动 (%.1f, %.1f)" % [_move_input.x, _move_input.y]
 
 
@@ -171,14 +172,15 @@ func _make_jaw(mat: Material, side: int) -> Node3D:
 
 
 func _on_grab_pressed() -> void:
-	match state:
-		State.IDLE:
-			state = State.LOWERING
-			grab_started.emit()
-		State.HOLDING:
-			_begin_open()
-		_:
-			pass
+	if state != State.IDLE:
+		return
+	if not credit_ready:
+		last_input_debug = "需投币"
+		return
+	credit_ready = false
+	last_input_debug = "下抓"
+	state = State.LOWERING
+	grab_started.emit()
 
 
 func request_grab() -> void:
@@ -186,7 +188,7 @@ func request_grab() -> void:
 
 
 func _update_movement(delta: float) -> void:
-	if state == State.IDLE or state == State.HOLDING:
+	if state == State.IDLE:
 		_rail_x = clampf(_rail_x + _move_input.x * MOVE_SPEED * delta, -X_RANGE, X_RANGE)
 		_rail_z = clampf(_rail_z + _move_input.y * MOVE_SPEED * delta, -Z_RANGE, Z_RANGE)
 	_apply_carriage_transform()
@@ -205,20 +207,28 @@ func _update_state(delta: float) -> void:
 			if _drop_y >= target - 0.001:
 				state = State.CLOSING
 				_close_t = 0.0
-				grip_force = MAX_GRIP
+				grip_force = float(claw_power)
+				_slip_timer = 0.0
 		State.CLOSING:
 			_close_t += delta
 			if _close_t >= CLOSE_TIME:
 				_try_grab()
 				state = State.LIFTING
+				_slip_timer = 0.0
 		State.LIFTING:
 			_drop_y = maxf(_drop_y - RISE_SPEED * delta, 0.0)
 			if _drop_y <= 0.001:
 				_drop_y = 0.0
-				if held_doll != null:
-					state = State.HOLDING
-				else:
-					_begin_open()
+				state = State.CARRYING
+				last_input_debug = "自动运到出口"
+		State.CARRYING:
+			var dest := drop_target
+			var pos := Vector2(_rail_x, _rail_z)
+			var next := pos.move_toward(dest, CARRY_SPEED * delta)
+			_rail_x = clampf(next.x, -X_RANGE, X_RANGE)
+			_rail_z = clampf(next.y, -Z_RANGE, Z_RANGE)
+			if pos.distance_to(dest) <= 0.02:
+				_begin_open()
 		State.OPENING:
 			_close_t += delta
 			if _close_t >= CLOSE_TIME * 0.5 and held_doll != null:
@@ -241,7 +251,7 @@ func _update_visuals() -> void:
 	match state:
 		State.CLOSING:
 			close_ratio = clampf(_close_t / CLOSE_TIME, 0.0, 1.0)
-		State.LIFTING, State.HOLDING:
+		State.LIFTING, State.CARRYING:
 			close_ratio = 1.0
 		State.OPENING:
 			close_ratio = 1.0 - clampf(_close_t / CLOSE_TIME, 0.0, 1.0)
@@ -262,15 +272,19 @@ func _update_grip(delta: float) -> void:
 		return
 	if not is_instance_valid(held_doll):
 		held_doll = null
-		if state == State.HOLDING:
+		if state in [State.LIFTING, State.CARRYING]:
 			_begin_open()
 		return
-
-	grip_force = maxf(grip_force - GRIP_DECAY * delta, 0.0)
-	var needed: float = held_doll.mass * 9.8 * 0.85
-	if grip_force < needed and state in [State.LIFTING, State.HOLDING]:
+	if state not in [State.LIFTING, State.CARRYING]:
+		return
+	_slip_timer += delta
+	if _slip_timer < SLIP_CHECK_INTERVAL:
+		return
+	_slip_timer = 0.0
+	if _should_slip(held_doll):
+		last_input_debug = "钩爪松动"
 		_release_held()
-		if state == State.HOLDING:
+		if state == State.CARRYING:
 			_begin_open()
 
 
@@ -299,14 +313,11 @@ func _try_grab() -> void:
 	if best == null:
 		return
 
-	var needed: float = best.mass * 9.8 * 0.85
-	if grip_force < needed:
-		return
-
 	held_doll = best
 	held_doll.is_held = true
 	held_doll.freeze = true
 	_hold_offset = Vector3(0, -0.14 - held_doll.radius * 0.35, 0)
+	grip_force = float(claw_power)
 
 	var global_xf: Transform3D = held_doll.global_transform
 	if held_doll.get_parent():
@@ -315,6 +326,18 @@ func _try_grab() -> void:
 	held_doll.global_transform = global_xf
 	held_doll.position = _hold_offset
 	held_doll.rotation = Vector3.ZERO
+	if _should_slip(held_doll):
+		last_input_debug = "钩爪松动"
+		_release_held()
+
+
+func _should_slip(doll: Doll) -> bool:
+	if slip_immune:
+		return false
+	var extra := doll.doll_weight - claw_power
+	if extra <= 0:
+		return false
+	return randf() < clampf(float(extra) * 0.1, 0.0, 1.0)
 
 
 func _begin_open() -> void:
@@ -343,26 +366,39 @@ func _release_held() -> void:
 	grip_force = 0.0
 
 
+func is_idle() -> bool:
+	return state == State.IDLE
+
+
 func reset_to_center() -> void:
 	_release_held()
 	state = State.IDLE
+	credit_ready = false
 	_rail_x = 0.0
 	_rail_z = 0.0
 	_drop_y = 0.0
 	_close_t = 0.0
 	_cooldown_left = 0.0
 	grip_force = 0.0
+	_slip_timer = 0.0
 	_apply_carriage_transform()
 	_update_visuals()
 
 
 func get_state_label() -> String:
 	match state:
-		State.IDLE: return "就绪"
-		State.LOWERING: return "下探"
-		State.CLOSING: return "闭合"
-		State.LIFTING: return "上升"
-		State.HOLDING: return "搬运"
-		State.OPENING: return "松开"
-		State.COOLDOWN: return "冷却"
+		State.IDLE:
+			return "已投币" if credit_ready else "待投币"
+		State.LOWERING:
+			return "下探"
+		State.CLOSING:
+			return "闭合"
+		State.LIFTING:
+			return "上升"
+		State.CARRYING:
+			return "运往出口"
+		State.OPENING:
+			return "松开"
+		State.COOLDOWN:
+			return "冷却"
 	return "?"

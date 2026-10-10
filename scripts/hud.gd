@@ -1,26 +1,112 @@
 class_name GameHUD
 extends CanvasLayer
 
+signal settings_restart_pressed
+signal settings_title_pressed
+signal result_next_pressed
+signal result_title_pressed
+signal shop_buy_pressed(kind: String, index: int)
+signal shop_continue_pressed
+
 @onready var money_label: Label = %MoneyLabel
 @onready var target_label: Label = %TargetLabel
 @onready var progress_bar: ProgressBar = %ProgressBar
-@onready var timer_label: Label = %TimerLabel
+@onready var coins_label: Label = %CoinsLabel
+@onready var meta_label: Label = %MetaLabel
 @onready var state_label: Label = %StateLabel
 @onready var banner_label: Label = %BannerLabel
 @onready var result_panel: PanelContainer = %ResultPanel
 @onready var result_label: Label = %ResultLabel
 @onready var restart_button: Button = %RestartButton
 @onready var grab_button: Button = %GrabButton
+@onready var coin_button: Button = %CoinButton
+@onready var settings_button: Button = %SettingsButton
+@onready var settings_overlay: Control = %SettingsOverlay
+@onready var settings_resume_button: Button = %SettingsResumeButton
+@onready var settings_restart_button: Button = %SettingsRestartButton
+@onready var settings_title_button: Button = %SettingsTitleButton
 
 var _banner_tween: Tween
+var _result_kind: int = RoundManager.ResultKind.FAIL
+var gold_label: Label
+var goods_label: Label
+var dolls_label: Label
+var shop: ShopOverlay
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	result_panel.visible = false
 	banner_label.text = ""
+	grab_button.text = "下抓"
+	_build_inventory_labels()
+	_build_shop()
 	_disable_focus_steal()
 	restart_button.focus_mode = Control.FOCUS_NONE
 	grab_button.focus_mode = Control.FOCUS_NONE
+	coin_button.focus_mode = Control.FOCUS_NONE
+	settings_button.focus_mode = Control.FOCUS_NONE
+	settings_overlay.visible = false
+	settings_overlay.process_mode = Node.PROCESS_MODE_ALWAYS
+	settings_button.pressed.connect(open_settings)
+	settings_resume_button.pressed.connect(close_settings)
+	settings_restart_button.pressed.connect(func():
+		close_settings()
+		settings_restart_pressed.emit()
+	)
+	settings_title_button.pressed.connect(func():
+		close_settings()
+		settings_title_pressed.emit()
+	)
+	restart_button.pressed.connect(_on_result_pressed)
+
+
+func _input(event: InputEvent) -> void:
+	if is_shop_open():
+		return
+	if not _is_escape(event):
+		return
+	toggle_settings()
+	get_viewport().set_input_as_handled()
+
+
+func _is_escape(event: InputEvent) -> bool:
+	if event.is_action_pressed("ui_cancel"):
+		return true
+	if event is InputEventKey and event.pressed and not event.echo:
+		return event.keycode == KEY_ESCAPE or event.physical_keycode == KEY_ESCAPE
+	return false
+
+
+func is_settings_open() -> bool:
+	return settings_overlay.visible
+
+
+func is_shop_open() -> bool:
+	return shop != null and shop.visible
+
+
+func toggle_settings() -> void:
+	if settings_overlay.visible:
+		close_settings()
+	else:
+		open_settings()
+
+
+func open_settings() -> void:
+	if is_shop_open():
+		return
+	settings_overlay.visible = true
+	get_tree().paused = true
+	settings_resume_button.grab_focus()
+
+
+func close_settings() -> void:
+	settings_overlay.visible = false
+	if not is_shop_open():
+		get_tree().paused = false
+	settings_resume_button.release_focus()
+	get_viewport().gui_release_focus()
 
 
 func _disable_focus_steal() -> void:
@@ -34,7 +120,10 @@ func _disable_focus_steal() -> void:
 func _set_tree_mouse_ignore(node: Node) -> void:
 	if node is Control:
 		var c := node as Control
-		if c != grab_button and c != restart_button and c != result_panel:
+		var interactive := c == grab_button or c == restart_button or c == result_panel or c == coin_button \
+				or c == settings_button or c == settings_overlay or settings_overlay.is_ancestor_of(c) \
+				or (shop != null and (c == shop or shop.is_ancestor_of(c)))
+		if not interactive:
 			c.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			c.focus_mode = Control.FOCUS_NONE
 	for child in node.get_children():
@@ -42,26 +131,38 @@ func _set_tree_mouse_ignore(node: Node) -> void:
 
 
 func set_money(total: int) -> void:
-	money_label.text = "总金额  %d" % total
+	money_label.text = "分数  %d" % total
 
 
 func set_target_progress(earned: int, target: int) -> void:
-	target_label.text = "本回合  %d / %d" % [earned, target]
-	progress_bar.max_value = float(target)
+	target_label.text = "本关  %d / %d" % [earned, target]
+	progress_bar.max_value = maxf(float(target), 1.0)
 	progress_bar.value = float(earned)
 
 
-func set_timer(time_left: float) -> void:
-	timer_label.text = "剩余  %.1fs" % time_left
-	if time_left <= 5.0:
-		timer_label.modulate = Color(1.0, 0.45, 0.35)
+func set_stage_info(stage: int, stage_count: int) -> void:
+	meta_label.text = "第%d关 / %d" % [stage, stage_count]
+
+
+func set_coins(coins: int, credited: bool) -> void:
+	coins_label.text = "硬币  %d" % coins
+	if coins <= 0:
+		coins_label.modulate = Color(1.0, 0.45, 0.35)
 	else:
-		timer_label.modulate = Color.WHITE
+		coins_label.modulate = Color.WHITE
+	if credited:
+		coin_button.text = "已投币"
+	else:
+		coin_button.text = "投币"
+
+
+func set_coin_enabled(enabled: bool) -> void:
+	coin_button.disabled = not enabled
 
 
 func set_claw_state(text: String, grip: float) -> void:
 	if grip > 0.0:
-		state_label.text = "%s · 抓力 %.0fN" % [text, grip]
+		state_label.text = "%s · 力量 %.0f" % [text, grip]
 	else:
 		state_label.text = text
 
@@ -76,17 +177,109 @@ func show_banner(text: String) -> void:
 	_banner_tween.tween_property(banner_label, "modulate:a", 0.0, 0.6)
 
 
-func show_result(success: bool, earned: int, target: int, total: int) -> void:
+func set_inventory(inventory: PlayerInventory) -> void:
+	if gold_label:
+		gold_label.text = "金币  %d" % inventory.gold
+	if goods_label:
+		goods_label.text = "道具  %s" % inventory.goods_summary()
+	if dolls_label:
+		dolls_label.text = "玩偶  %s" % inventory.dolls_summary()
+	if is_shop_open():
+		shop.refresh(inventory)
+
+
+func show_result(kind: int, stage: int, earned: int, target: int, total: int, gold_reward: int = 0) -> void:
+	_result_kind = kind
 	result_panel.visible = true
 	result_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	restart_button.focus_mode = Control.FOCUS_ALL
-	if success:
-		result_label.text = "回合结算：达标\n收益 %d / 目标 %d\n总金额 %d" % [earned, target, total]
-	else:
-		result_label.text = "回合结算：未达标\n收益 %d / 目标 %d\n（原型：收益未入账）\n总金额 %d" % [earned, target, total]
+	match kind:
+		RoundManager.ResultKind.NEXT:
+			result_label.text = "第%d关达标\n得分 %d / 目标 %d\n累计分数 %d\n本关获得金币 %d" % [stage, earned, target, total, gold_reward]
+			restart_button.text = "确定"
+		RoundManager.ResultKind.CLEAR:
+			result_label.text = "全部通关\n第%d关得分 %d / 目标 %d\n累计分数 %d\n本关获得金币 %d" % [stage, earned, target, total, gold_reward]
+			restart_button.text = "确定"
+		_:
+			result_label.text = "游戏失败\n第%d关得分 %d / 目标 %d\n未达目标，无法进入下一关\n累计分数 %d" % [stage, earned, target, total]
+			restart_button.text = "返回主菜单"
+
+
+func _on_result_pressed() -> void:
+	if _result_kind == RoundManager.ResultKind.FAIL:
+		result_title_pressed.emit()
+		return
+	hide_result()
+	show_shop(_result_kind == RoundManager.ResultKind.NEXT)
 
 
 func hide_result() -> void:
 	result_panel.visible = false
 	restart_button.focus_mode = Control.FOCUS_NONE
 	restart_button.release_focus()
+
+
+func show_shop(continue_is_next: bool) -> void:
+	if shop == null:
+		return
+	close_settings()
+	shop.open(continue_is_next, shop_inventory())
+	get_tree().paused = true
+
+
+func hide_shop() -> void:
+	if shop:
+		shop.close()
+	get_tree().paused = false
+	get_viewport().gui_release_focus()
+
+
+func refresh_shop(inventory: PlayerInventory) -> void:
+	if shop:
+		shop.refresh(inventory)
+		shop.rebuild_list()
+
+
+func show_shop_status(text: String) -> void:
+	if shop:
+		shop.set_status(text)
+
+
+func shop_inventory() -> PlayerInventory:
+	var parent := get_parent()
+	if parent and parent.has_node("RoundManager"):
+		return parent.get_node("RoundManager").inventory
+	return PlayerInventory.new()
+
+
+func _build_inventory_labels() -> void:
+	var right: VBoxContainer = meta_label.get_parent()
+	gold_label = Label.new()
+	gold_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	gold_label.add_theme_font_size_override("font_size", 16)
+	gold_label.text = "金币  0"
+	right.add_child(gold_label)
+	goods_label = Label.new()
+	goods_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	goods_label.add_theme_font_size_override("font_size", 12)
+	goods_label.modulate = Color(0.8, 0.85, 0.9)
+	goods_label.text = "道具  无"
+	right.add_child(goods_label)
+	dolls_label = Label.new()
+	dolls_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	dolls_label.add_theme_font_size_override("font_size", 12)
+	dolls_label.modulate = Color(0.8, 0.85, 0.9)
+	dolls_label.text = "玩偶  无"
+	right.add_child(dolls_label)
+
+
+func _build_shop() -> void:
+	shop = ShopOverlay.new()
+	$Root.add_child(shop)
+	shop.buy_pressed.connect(func(kind: String, index: int):
+		shop_buy_pressed.emit(kind, index)
+	)
+	shop.continue_pressed.connect(func():
+		hide_shop()
+		shop_continue_pressed.emit()
+	)

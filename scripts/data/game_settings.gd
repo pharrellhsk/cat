@@ -4,10 +4,17 @@ extends RefCounted
 const PACKED_PATH := "res://assets/config/packed/setting.json"
 const DEFAULTS := {
 	"round_time": 30,
+	"start_coin": 5,
+	"claw_power": 15,
 }
 
 static var _values: Dictionary = {}
 static var _loaded: bool = false
+
+
+static func reload() -> void:
+	_loaded = false
+	ensure_loaded()
 
 
 static func ensure_loaded() -> void:

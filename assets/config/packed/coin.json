@@ -1,0 +1,19 @@
+[
+  {
+    "coin_name": "普通游戏币",
+    "coin_effect": 1001,
+    "effect_para": [],
+    "coin_description": "普通的游戏币，可以夹一次娃娃",
+    "coin_price": 50
+  },
+  {
+    "coin_name": "电玩币",
+    "coin_effect": 1002,
+    "effect_para": [
+      1,
+      2
+    ],
+    "coin_description": "投入后让1个娃娃获得电玩效果",
+    "coin_price": 80
+  }
+]

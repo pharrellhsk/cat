@@ -1,3 +1,5 @@
 {
-  "round_time": 999
+  "round_time": -1,
+  "start_coin": 5,
+  "claw_power": 15
 }

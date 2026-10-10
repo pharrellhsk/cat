@@ -1,0 +1,12 @@
+[
+  {
+    "goods_name": "钩爪加固器",
+    "goods_effect": 3001,
+    "effect_para": [
+      1
+    ],
+    "goods_description": "下一次抓取时，摇杆不会松动",
+    "goods_price": 80,
+    "goods_limit": 1
+  }
+]

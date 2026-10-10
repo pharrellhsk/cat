@@ -1,0 +1,58 @@
+[
+  {
+    "doll_name": "基础玩偶1",
+    "doll_effect": 2000,
+    "effect_para": [
+      1
+    ],
+    "doll_description": "基础的小型玩偶",
+    "doll_price": 20,
+    "doll_point": 15,
+    "doll_weight": 5
+  },
+  {
+    "doll_name": "基础玩偶2",
+    "doll_effect": 2000,
+    "effect_para": [
+      1
+    ],
+    "doll_description": "基础的中型玩偶",
+    "doll_price": 20,
+    "doll_point": 20,
+    "doll_weight": 8
+  },
+  {
+    "doll_name": "基础玩偶3",
+    "doll_effect": 2000,
+    "effect_para": [
+      1
+    ],
+    "doll_description": "基础的大型玩偶",
+    "doll_price": 20,
+    "doll_point": 25,
+    "doll_weight": 12
+  },
+  {
+    "doll_name": "电玩兔",
+    "doll_effect": 2001,
+    "effect_para": [
+      1,
+      1
+    ],
+    "doll_description": "每回合在娃娃机中投入一只电玩兔",
+    "doll_price": 50,
+    "doll_point": 30,
+    "doll_weight": 15
+  },
+  {
+    "doll_name": "测试玩偶1",
+    "doll_effect": 2000,
+    "effect_para": [
+      1
+    ],
+    "doll_description": "测试用玩偶，无特殊效果",
+    "doll_price": 30,
+    "doll_point": 40,
+    "doll_weight": 15
+  }
+]
