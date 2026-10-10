@@ -7,13 +7,13 @@ signal timer_updated(time_left: float)
 signal round_settled(success: bool, round_earned: int, target: int, total_money: int)
 signal banner(text: String)
 
-const ROUND_DURATION := 30.0
 ## Game 1 Round 1 target from GDD.
 const ROUND_TARGET := 30
 
 var total_money: int = 0
 var round_earned: int = 0
-var time_left: float = ROUND_DURATION
+var round_duration: float = 30.0
+var time_left: float = 30.0
 var target: int = ROUND_TARGET
 var active: bool = false
 var settled: bool = false
@@ -21,11 +21,12 @@ var settled: bool = false
 
 func start_round() -> void:
 	round_earned = 0
-	time_left = ROUND_DURATION
+	round_duration = maxf(GameSettings.get_float("round_time", 30.0), 0.0)
+	time_left = round_duration
 	target = ROUND_TARGET
 	active = true
 	settled = false
-	round_started.emit(target, ROUND_DURATION)
+	round_started.emit(target, round_duration)
 	earnings_changed.emit(round_earned, total_money)
 	timer_updated.emit(time_left)
 	banner.emit("第1局 · 第1回合  目标 %d" % target)
