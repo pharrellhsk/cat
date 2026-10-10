@@ -31,26 +31,55 @@ func spend_gold(amount: int) -> bool:
 
 
 func add_start_coins(count: int) -> void:
-	for _i in maxi(count, 0):
-		coins.append({
+	var starter := ShopCatalog.coin_by_name("普通游戏币")
+	if starter.is_empty():
+		starter = {
 			"coin_name": "普通游戏币",
 			"coin_effect": 1001,
 			"effect_para": [],
-		})
-	changed.emit()
+			"coin_description": "普通的游戏币，可以夹一次娃娃",
+		}
+	for _i in maxi(count, 0):
+		add_shop_coin(starter)
 
 
 func add_shop_coin(def: Dictionary) -> void:
+	var catalog := ShopCatalog.coin_by_name(ConfigTable.as_string(def.get("coin_name", "")))
+	var description := ConfigTable.as_string(def.get("coin_description", ""))
+	if description == "" and not catalog.is_empty():
+		description = ConfigTable.as_string(catalog.get("coin_description", ""))
 	coins.append({
 		"coin_name": ConfigTable.as_string(def.get("coin_name", "硬币")),
 		"coin_effect": ConfigTable.as_int(def.get("coin_effect", 1001)),
 		"effect_para": ConfigTable.as_int_array(def.get("effect_para", [])),
+		"coin_description": description,
 	})
 	changed.emit()
 
 
 func coin_count() -> int:
 	return coins.size()
+
+
+func coin_kinds() -> Array:
+	var grouped: Dictionary = {}
+	var order: Array = []
+	for item in coins:
+		var name := str(item.get("coin_name", "硬币"))
+		if not grouped.has(name):
+			grouped[name] = {
+				"coin_name": name,
+				"coin_description": str(item.get("coin_description", "")),
+				"count": 0,
+			}
+			order.append(name)
+		grouped[name]["count"] = int(grouped[name]["count"]) + 1
+		if str(grouped[name]["coin_description"]) == "":
+			grouped[name]["coin_description"] = str(item.get("coin_description", ""))
+	var result: Array = []
+	for name in order:
+		result.append(grouped[name])
+	return result
 
 
 func take_coin() -> Dictionary:

@@ -11,6 +11,7 @@ const DOLL_COUNT := 10
 var _exit: ExitChute
 var _rng := RandomNumberGenerator.new()
 var _restarting := false
+var _hovered_doll: Doll = null
 
 
 func _ready() -> void:
@@ -36,12 +37,15 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	if hud.is_settings_open() or hud.is_shop_open():
+		if _hovered_doll:
+			_set_hovered_doll(null)
 		return
 	hud.set_claw_state(
 		"%s | 输入:%s" % [claw.get_state_label(), claw.last_input_debug],
 		claw.grip_force
 	)
 	hud.set_coin_enabled(round_manager.can_insert_coin() and claw.is_idle())
+	_update_doll_hover()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -182,7 +186,66 @@ func _spawn_dolls() -> void:
 
 
 func _on_doll_exited(doll: Doll, value: int) -> void:
+	if _hovered_doll == doll:
+		_set_hovered_doll(null)
 	round_manager.add_earn(value, doll.display_name)
+
+
+func _update_doll_hover() -> void:
+	var mouse := get_viewport().get_mouse_position()
+	if hud.is_pointer_over_ui(mouse):
+		_set_hovered_doll(null)
+		return
+	_set_hovered_doll(_pick_doll_at(mouse))
+
+
+func _pick_doll_at(mouse: Vector2) -> Doll:
+	var camera := get_viewport().get_camera_3d()
+	if camera == null:
+		return null
+	var origin := camera.project_ray_origin(mouse)
+	var dir := camera.project_ray_normal(mouse)
+	var query := PhysicsRayQueryParameters3D.create(origin, origin + dir * 40.0)
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	query.collision_mask = 2
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if not hit.is_empty():
+		var doll := hit.get("collider") as Doll
+		if doll and not doll.is_collected and not doll.is_held:
+			return doll
+	var best: Doll = null
+	var best_dist := 42.0
+	for child in dolls_root.get_children():
+		var doll := child as Doll
+		if doll == null or doll.is_collected or doll.is_held:
+			continue
+		if not is_instance_valid(doll):
+			continue
+		if camera.is_position_behind(doll.global_position):
+			continue
+		var screen := camera.unproject_position(doll.global_position)
+		var dist := screen.distance_to(mouse)
+		if dist < best_dist:
+			best_dist = dist
+			best = doll
+	return best
+
+
+func _set_hovered_doll(doll: Doll) -> void:
+	if _hovered_doll == doll:
+		if doll == null:
+			return
+		return
+	if _hovered_doll and is_instance_valid(_hovered_doll):
+		_hovered_doll.set_hovered(false)
+	_hovered_doll = doll
+	if _hovered_doll and is_instance_valid(_hovered_doll):
+		_hovered_doll.set_hovered(true)
+		var info: Dictionary = _hovered_doll.hover_info()
+		hud.show_hover_card(str(info.get("title", "")), str(info.get("body", "")), "doll")
+	else:
+		hud.hide_hover_card("doll")
 
 
 func _on_shop_buy(kind: String, index: int) -> void:

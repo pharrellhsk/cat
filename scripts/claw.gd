@@ -12,7 +12,6 @@ const LOWER_SPEED := 0.8
 const RISE_SPEED := 0.6
 const CARRY_SPEED := 1.4
 const CLOSE_TIME := 0.4
-const SLIP_CHECK_INTERVAL := 0.35
 const ROPE_LENGTH := 1.5
 const COOLDOWN := 1.0
 const X_RANGE := 0.9
@@ -37,7 +36,10 @@ var _close_t: float = 0.0
 var _cooldown_left: float = 0.0
 var _move_input: Vector2 = Vector2.ZERO
 var _hold_offset: Vector3 = Vector3.ZERO
-var _slip_timer: float = 0.0
+var _will_drop := false
+var _drop_progress := 1.0
+var _carry_start := Vector2.ZERO
+var _carry_distance := 0.0
 
 var _carriage: Node3D
 var _cable: MeshInstance3D
@@ -76,7 +78,7 @@ func _process(delta: float) -> void:
 	_update_movement(delta)
 	_update_state(delta)
 	_update_visuals()
-	_update_grip(delta)
+	_update_carry_drop()
 	_sync_held_doll()
 
 
@@ -149,11 +151,13 @@ func _build() -> void:
 	_grip_area = Area3D.new()
 	_grip_area.monitoring = true
 	_grip_area.monitorable = false
+	_grip_area.collision_layer = 0
+	_grip_area.collision_mask = 2
 	var area_col := CollisionShape3D.new()
 	var sphere := SphereShape3D.new()
-	sphere.radius = 0.22
+	sphere.radius = 0.28
 	area_col.shape = sphere
-	area_col.position = Vector3(0, -0.12, 0)
+	area_col.position = Vector3(0, -0.14, 0)
 	_grip_area.add_child(area_col)
 	_gripper.add_child(_grip_area)
 
@@ -208,18 +212,18 @@ func _update_state(delta: float) -> void:
 				state = State.CLOSING
 				_close_t = 0.0
 				grip_force = float(claw_power)
-				_slip_timer = 0.0
 		State.CLOSING:
 			_close_t += delta
 			if _close_t >= CLOSE_TIME:
 				_try_grab()
 				state = State.LIFTING
-				_slip_timer = 0.0
 		State.LIFTING:
 			_drop_y = maxf(_drop_y - RISE_SPEED * delta, 0.0)
 			if _drop_y <= 0.001:
 				_drop_y = 0.0
 				state = State.CARRYING
+				_carry_start = Vector2(_rail_x, _rail_z)
+				_carry_distance = _carry_start.distance_to(drop_target)
 				last_input_debug = "自动运到出口"
 		State.CARRYING:
 			var dest := drop_target
@@ -267,25 +271,24 @@ func _update_visuals() -> void:
 	_cable.position = Vector3(0, -cable_len * 0.5, 0)
 
 
-func _update_grip(delta: float) -> void:
-	if held_doll == null:
+func _update_carry_drop() -> void:
+	if state != State.CARRYING or not _will_drop:
 		return
-	if not is_instance_valid(held_doll):
+	if held_doll == null or not is_instance_valid(held_doll):
 		held_doll = null
-		if state in [State.LIFTING, State.CARRYING]:
-			_begin_open()
+		_will_drop = false
+		_begin_open()
 		return
-	if state not in [State.LIFTING, State.CARRYING]:
-		return
-	_slip_timer += delta
-	if _slip_timer < SLIP_CHECK_INTERVAL:
-		return
-	_slip_timer = 0.0
-	if _should_slip(held_doll):
-		last_input_debug = "钩爪松动"
+	if _carry_distance <= 0.001:
+		last_input_debug = "运送中掉落"
 		_release_held()
-		if state == State.CARRYING:
-			_begin_open()
+		_begin_open()
+		return
+	var traveled := _carry_start.distance_to(Vector2(_rail_x, _rail_z))
+	if traveled / _carry_distance >= _drop_progress:
+		last_input_debug = "运送中掉落"
+		_release_held()
+		_begin_open()
 
 
 func _sync_held_doll() -> void:
@@ -299,6 +302,34 @@ func _sync_held_doll() -> void:
 
 
 func _try_grab() -> void:
+	var best: Doll = _find_overlap_doll()
+	if best == null:
+		best = _find_nearby_doll()
+	if best == null:
+		last_input_debug = "未抓到"
+		return
+
+	held_doll = best
+	held_doll.is_held = true
+	held_doll.freeze = true
+	_hold_offset = Vector3(0, -0.14 - held_doll.radius * 0.35, 0)
+	grip_force = float(claw_power)
+	last_input_debug = "抓住 %s" % held_doll.display_name
+
+	var global_xf: Transform3D = held_doll.global_transform
+	if held_doll.get_parent():
+		held_doll.get_parent().remove_child(held_doll)
+	_gripper.add_child(held_doll)
+	held_doll.global_transform = global_xf
+	held_doll.position = _hold_offset
+	held_doll.rotation = Vector3.ZERO
+	_will_drop = _roll_drop(held_doll)
+	_drop_progress = randf_range(0.18, 0.82)
+	if _will_drop:
+		last_input_debug = "抓住 %s（运送中可能掉落）" % held_doll.display_name
+
+
+func _find_overlap_doll() -> Doll:
 	var best: Doll = null
 	var best_dist := 999.0
 	for body in _grip_area.get_overlapping_bodies():
@@ -309,29 +340,28 @@ func _try_grab() -> void:
 		if dist < best_dist:
 			best_dist = dist
 			best = doll
-
-	if best == null:
-		return
-
-	held_doll = best
-	held_doll.is_held = true
-	held_doll.freeze = true
-	_hold_offset = Vector3(0, -0.14 - held_doll.radius * 0.35, 0)
-	grip_force = float(claw_power)
-
-	var global_xf: Transform3D = held_doll.global_transform
-	if held_doll.get_parent():
-		held_doll.get_parent().remove_child(held_doll)
-	_gripper.add_child(held_doll)
-	held_doll.global_transform = global_xf
-	held_doll.position = _hold_offset
-	held_doll.rotation = Vector3.ZERO
-	if _should_slip(held_doll):
-		last_input_debug = "钩爪松动"
-		_release_held()
+	return best
 
 
-func _should_slip(doll: Doll) -> bool:
+func _find_nearby_doll() -> Doll:
+	var parent_node := drop_parent if drop_parent else get_parent()
+	if parent_node == null:
+		return null
+	var best: Doll = null
+	var best_dist := 0.32
+	var origin := _gripper.global_position + Vector3(0, -0.12, 0)
+	for child in parent_node.get_children():
+		var doll := child as Doll
+		if doll == null or doll.is_collected or doll.is_held:
+			continue
+		var dist := origin.distance_to(doll.global_position)
+		if dist < best_dist:
+			best_dist = dist
+			best = doll
+	return best
+
+
+func _roll_drop(doll: Doll) -> bool:
 	if slip_immune:
 		return false
 	var extra := doll.doll_weight - claw_power
@@ -364,6 +394,7 @@ func _release_held() -> void:
 	released_doll.emit(held_doll)
 	held_doll = null
 	grip_force = 0.0
+	_will_drop = false
 
 
 func is_idle() -> bool:
@@ -380,7 +411,9 @@ func reset_to_center() -> void:
 	_close_t = 0.0
 	_cooldown_left = 0.0
 	grip_force = 0.0
-	_slip_timer = 0.0
+	_will_drop = false
+	_drop_progress = 1.0
+	_carry_distance = 0.0
 	_apply_carriage_transform()
 	_update_visuals()
 

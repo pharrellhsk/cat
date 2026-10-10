@@ -32,6 +32,17 @@ var gold_label: Label
 var goods_label: Label
 var dolls_label: Label
 var shop: ShopOverlay
+var coin_icon_row: VBoxContainer
+var hover_card: HoverCard
+var _hover_source := ""
+
+const HOVER_CARD_SCENE := preload("res://scenes/ui/hover_card.tscn")
+const COIN_COLORS := [
+	Color(0.86, 0.68, 0.28),
+	Color(0.42, 0.72, 0.86),
+	Color(0.78, 0.48, 0.72),
+	Color(0.52, 0.78, 0.48),
+]
 
 
 func _ready() -> void:
@@ -41,6 +52,7 @@ func _ready() -> void:
 	grab_button.text = "下抓"
 	_build_inventory_labels()
 	_build_shop()
+	_build_hover_card()
 	_disable_focus_steal()
 	restart_button.focus_mode = Control.FOCUS_NONE
 	grab_button.focus_mode = Control.FOCUS_NONE
@@ -122,7 +134,9 @@ func _set_tree_mouse_ignore(node: Node) -> void:
 		var c := node as Control
 		var interactive := c == grab_button or c == restart_button or c == result_panel or c == coin_button \
 				or c == settings_button or c == settings_overlay or settings_overlay.is_ancestor_of(c) \
-				or (shop != null and (c == shop or shop.is_ancestor_of(c)))
+				or (shop != null and (c == shop or shop.is_ancestor_of(c))) \
+				or (coin_icon_row != null and (c == coin_icon_row or coin_icon_row.is_ancestor_of(c))) \
+				or (hover_card != null and c == hover_card)
 		if not interactive:
 			c.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			c.focus_mode = Control.FOCUS_NONE
@@ -184,6 +198,7 @@ func set_inventory(inventory: PlayerInventory) -> void:
 		goods_label.text = "道具  %s" % inventory.goods_summary()
 	if dolls_label:
 		dolls_label.text = "玩偶  %s" % inventory.dolls_summary()
+	_refresh_coin_icons(inventory)
 	if is_shop_open():
 		shop.refresh(inventory)
 
@@ -271,6 +286,69 @@ func _build_inventory_labels() -> void:
 	dolls_label.modulate = Color(0.8, 0.85, 0.9)
 	dolls_label.text = "玩偶  无"
 	right.add_child(dolls_label)
+	_build_coin_icon_column()
+
+
+func _build_coin_icon_column() -> void:
+	coin_icon_row = VBoxContainer.new()
+	coin_icon_row.name = "CoinKindColumn"
+	coin_icon_row.alignment = BoxContainer.ALIGNMENT_END
+	coin_icon_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	coin_icon_row.add_theme_constant_override("separation", 6)
+	coin_icon_row.mouse_filter = Control.MOUSE_FILTER_STOP
+	var parent := coins_label.get_parent()
+	parent.add_child(coin_icon_row)
+	parent.move_child(coin_icon_row, coins_label.get_index() + 1)
+
+
+func _build_hover_card() -> void:
+	hover_card = HOVER_CARD_SCENE.instantiate() as HoverCard
+	add_child(hover_card)
+
+
+func _refresh_coin_icons(inventory: PlayerInventory) -> void:
+	if coin_icon_row == null:
+		return
+	for child in coin_icon_row.get_children():
+		child.queue_free()
+	var kinds: Array = inventory.coin_kinds()
+	for i in kinds.size():
+		var kind: Dictionary = kinds[i]
+		var icon := CoinKindIcon.new()
+		var title := str(kind.get("coin_name", "硬币"))
+		var body := str(kind.get("coin_description", ""))
+		if body == "":
+			body = "用于投币下抓"
+		icon.setup(title, body, int(kind.get("count", 1)), COIN_COLORS[i % COIN_COLORS.size()])
+		icon.hovered.connect(func(title: String, body: String):
+			show_hover_card(title, body, "coin")
+		)
+		icon.unhovered.connect(func():
+			hide_hover_card("coin")
+		)
+		coin_icon_row.add_child(icon)
+
+
+func show_hover_card(title: String, body: String, source: String = "ui") -> void:
+	_hover_source = source
+	if hover_card:
+		hover_card.show_info(title, body)
+
+
+func hide_hover_card(source: String = "") -> void:
+	if source != "" and _hover_source != source:
+		return
+	_hover_source = ""
+	if hover_card:
+		hover_card.hide_card()
+
+
+func is_pointer_over_ui(pos: Vector2) -> bool:
+	if coin_icon_row and coin_icon_row.get_global_rect().has_point(pos):
+		return true
+	if result_panel.visible and result_panel.get_global_rect().has_point(pos):
+		return true
+	return false
 
 
 func _build_shop() -> void:

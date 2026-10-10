@@ -44,3 +44,11 @@ static func doll_at(index: int) -> Dictionary:
 	if index < 0 or index >= dolls.size():
 		return {}
 	return dolls[index]
+
+
+static func coin_by_name(coin_name: String) -> Dictionary:
+	ensure_loaded()
+	for item in coins:
+		if str(item.get("coin_name", "")) == coin_name:
+			return item
+	return {}

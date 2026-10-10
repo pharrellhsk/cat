@@ -43,6 +43,7 @@ static func ensure_loaded() -> void:
 			"doll_weight": weight,
 			"effect": ConfigTable.as_int(row.get("doll_effect", 2000)),
 			"effect_para": ConfigTable.as_int_array(row.get("effect_para", [])),
+			"description": ConfigTable.as_string(row.get("doll_description", "")),
 			"raw": row,
 		}
 		var copies := 2 if i < 3 else 1
@@ -63,6 +64,7 @@ static func ensure_loaded() -> void:
 			"doll_weight": 5,
 			"effect": 2000,
 			"effect_para": [1],
+			"description": "基础玩偶",
 			"raw": {},
 		}
 
